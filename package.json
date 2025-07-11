@@ -1,0 +1,46 @@
+{
+  "name": "autoweave-memory",
+  "version": "1.0.0",
+  "description": "AutoWeave Hybrid Memory System - Contextual (mem0) + Structural (GraphRAG) memory management",
+  "main": "src/memory/hybrid-memory.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest",
+    "setup": "./scripts/setup-memory-system.sh",
+    "mem0-bridge": "python scripts/mem0-bridge.py",
+    "health": "node scripts/health-check.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "ioredis": "^5.3.2",
+    "redis": "^4.6.0",
+    "redis-search": "^2.0.0",
+    "winston": "^3.11.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2"
+  },
+  "keywords": [
+    "autoweave",
+    "memory",
+    "mem0",
+    "graphrag",
+    "hybrid-memory",
+    "vector-store",
+    "graph-database",
+    "redis-ml"
+  ],
+  "author": "AutoWeave Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gontrand-hub/autoweave-memory.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,74 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Testing
+coverage/
+.nyc_output/
+.pytest_cache/
+htmlcov/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Docker volumes (local development)
+qdrant_data/
+memgraph_data/
+memgraph_log/
+redis_data/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Memory dumps
+*.dump
+*.rdb
+
+# Backup files
+*.backup
+*.bak
+
+# Kubernetes
+*.kubeconfig
+*-secret.yaml

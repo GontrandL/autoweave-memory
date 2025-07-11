@@ -1,0 +1,118 @@
+version: '3.8'
+
+services:
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:v1.7.0
+    container_name: autoweave-qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"  # gRPC port
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__HTTP_PORT=6333
+      - QDRANT__SERVICE__GRPC_PORT=6334
+      - QDRANT__LOG_LEVEL=INFO
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Memgraph Graph Database
+  memgraph:
+    image: memgraph/memgraph:2.14.0
+    container_name: autoweave-memgraph
+    ports:
+      - "7687:7687"  # Bolt protocol
+      - "3000:3000"  # Lab interface
+    volumes:
+      - memgraph_data:/var/lib/memgraph
+      - memgraph_log:/var/log/memgraph
+    environment:
+      - MEMGRAPH_MEMORY_LIMIT=4096  # 4GB memory limit
+      - MEMGRAPH_LOG_LEVEL=INFO
+      - MEMGRAPH_QUERY_TIMEOUT=600  # 10 minutes
+      - MEMGRAPH_BOLT_SERVER_NAME_DATA=autoweave-memgraph
+    command: ["--log-level=INFO", "--query-execution-timeout-sec=600", "--bolt-server-name-data=autoweave-memgraph"]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "echo", "MATCH (n) RETURN n LIMIT 1;", "|", "mgconsole", "--use-ssl=false"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis with RedisSearch/RedisJSON modules for ML Cache
+  redis-ml:
+    image: redis/redis-stack:7.2.0-v6
+    container_name: autoweave-redis-ml
+    ports:
+      - "6379:6379"
+      - "8001:8001"  # RedisInsight
+    volumes:
+      - redis_data:/data
+    environment:
+      - REDIS_ARGS=--save 60 1 --loglevel notice
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Optional: Memgraph Lab for visualization
+  memgraph-lab:
+    image: memgraph/lab:2.10.0
+    container_name: autoweave-memgraph-lab
+    ports:
+      - "3001:3000"
+    environment:
+      - QUICK_CONNECT_MG_HOST=memgraph
+      - QUICK_CONNECT_MG_PORT=7687
+    depends_on:
+      - memgraph
+    restart: unless-stopped
+
+  # Optional: mem0 Bridge Service (Python)
+  mem0-bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile.mem0
+    container_name: autoweave-mem0-bridge
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./scripts:/app/scripts
+      - ./config:/app/config
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - MEMGRAPH_HOST=memgraph
+      - MEMGRAPH_PORT=7687
+      - REDIS_HOST=redis-ml
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - LOG_LEVEL=INFO
+    depends_on:
+      - qdrant
+      - memgraph
+      - redis-ml
+    restart: unless-stopped
+    command: ["python", "scripts/mem0-bridge.py", "serve"]
+
+volumes:
+  qdrant_data:
+    driver: local
+  memgraph_data:
+    driver: local
+  memgraph_log:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: autoweave-memory-network
+    driver: bridge
