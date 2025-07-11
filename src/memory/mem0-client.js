@@ -21,8 +21,8 @@ class AutoWeaveMemory {
         this.client = null;
         this.mockMode = false;
         this.selfHosted = process.env.MEM0_SELF_HOSTED === 'true';
-        this.pythonBridgePath = path.join(__dirname, '../../scripts/mem0-bridge-wrapper.sh');
-        this.pythonVenvPath = 'bash';
+        this.pythonBridgePath = path.join(__dirname, '../../scripts/mem0-bridge.py');
+        this.pythonVenvPath = path.join(__dirname, '../../venv/bin/python');
         
         this.initializeClient();
     }
@@ -87,18 +87,17 @@ class AutoWeaveMemory {
      */
     async callPythonBridge(command, args = []) {
         return new Promise((resolve, reject) => {
-            const pythonArgs = [command, ...args];
+            const pythonArgs = [this.pythonBridgePath, command, ...args];
             
             this.logger.debug(`Calling Python bridge: ${command} with args: ${args}`);
             
-            const process = spawn(this.pythonBridgePath, pythonArgs, {
+            const process = spawn(this.pythonVenvPath, pythonArgs, {
                 env: { 
                     ...process.env,
                     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-                    QDRANT_HOST: process.env.QDRANT_HOST || 'localhost',
+                    QDRANT_HOST: process.env.QDRANT_HOST || 'qdrant-service',
                     QDRANT_PORT: process.env.QDRANT_PORT || '6333',
-                    QDRANT_API_KEY: process.env.QDRANT_API_KEY,
-                    MEMGRAPH_HOST: process.env.MEMGRAPH_HOST || 'localhost',
+                    MEMGRAPH_HOST: process.env.MEMGRAPH_HOST || 'memgraph-service',
                     MEMGRAPH_PORT: process.env.MEMGRAPH_PORT || '7687',
                     SKIP_CONNECTIVITY_CHECK: 'true' // Skip pour l'instant car Qdrant est dans K8s
                 }
